@@ -1,5 +1,6 @@
 package com.example.revice
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -26,23 +27,27 @@ class MainActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
-        val view = mainBinding.root
 
         enableEdgeToEdge()
-        setContentView(view)
+        setContentView(mainBinding.root)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        val etEmail: EditText = mainBinding.editTextTextEmailAddress
-        val etPass: EditText = mainBinding.editTextTextPassword
-        val btnLogin: Button = mainBinding.login
-        val btnReg: Button = mainBinding.createAccount
+        val etEmail: EditText = mainBinding.etEmail
+        val etPass: EditText = mainBinding.etPassword
+        val btnLogin: Button = mainBinding.btnLogin
+        val btnReg: Button = mainBinding.btnCreateAccount
 
         btnLogin.setOnClickListener{
             signIn(etEmail.text.toString(), etPass.text.toString())
+        }
+
+        btnReg.setOnClickListener{
+            val intent = Intent(this, AccountCreation::class.java)
+            startActivity(intent)
         }
     }
 

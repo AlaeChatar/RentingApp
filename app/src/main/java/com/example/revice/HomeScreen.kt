@@ -30,10 +30,15 @@ class HomeScreen : AppCompatActivity() {
         }
 
         val ivProfile = homeScreenBinding.ivProfile
+        val btnReserve = homeScreenBinding.btnReserve
 
         ivProfile.setOnClickListener{
-            auth.signOut()
-            val intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, Profile::class.java)
+            startActivity(intent)
+        }
+
+        btnReserve.setOnClickListener{
+            val intent = Intent(this, ReservationScreen::class.java)
             startActivity(intent)
         }
     }

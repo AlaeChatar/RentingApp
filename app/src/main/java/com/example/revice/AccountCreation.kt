@@ -48,7 +48,7 @@ class AccountCreation : AppCompatActivity() {
 
     private fun registerUser(email: String, password: String, confirmPassword: String) {
         // Check if email or password fields are empty
-        if (email.isEmpty() && password.isEmpty() && confirmPassword.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(baseContext, "Email and password fields cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
@@ -69,6 +69,9 @@ class AccountCreation : AppCompatActivity() {
                         baseContext, "Registration successful for ${user?.email}",
                         Toast.LENGTH_SHORT
                     ).show()
+
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
                 } else {
                     // If registration fails, display a message to the user.
                     Toast.makeText(
@@ -77,9 +80,6 @@ class AccountCreation : AppCompatActivity() {
                     ).show()
                 }
             }
-
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
     }
 
 }

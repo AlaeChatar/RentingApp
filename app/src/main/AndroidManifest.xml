@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Required Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -14,6 +17,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Revice"
         tools:targetApi="31">
+
+        <!-- osmdroid Tile Caching Path -->
+        <meta-data
+            android:name="osmdroid.tile.path"
+            android:value="osmdroid_tiles" />
+
         <activity
             android:name=".MapScreen"
             android:exported="false" />

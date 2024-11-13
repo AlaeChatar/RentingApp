@@ -52,6 +52,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signIn(email: String, password: String) {
+        // Check if email or password fields are empty
+        if (email.isEmpty() && password.isEmpty()) {
+            Toast.makeText(baseContext, "Email and password fields cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Proceed with authentication if fields are not empty
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -66,4 +73,5 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
+
 }

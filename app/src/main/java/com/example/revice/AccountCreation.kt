@@ -35,13 +35,25 @@ class AccountCreation : AppCompatActivity() {
         val etPass1 = signUpBinding.etPasswordSignUp1
         val etPass2 = signUpBinding.etPasswordSignUp2
         val btnReg = signUpBinding.btnSignUp
+        val btnRetLogin = signUpBinding.btnRetLogin
 
         btnReg.setOnClickListener{
             registerUser(etMail.text.toString(), etPass1.text.toString(), etPass2.text.toString())
         }
+
+        btnRetLogin.setOnClickListener{
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun registerUser(email: String, password: String, confirmPassword: String) {
+        // Check if email or password fields are empty
+        if (email.isEmpty() && password.isEmpty() && confirmPassword.isEmpty()) {
+            Toast.makeText(baseContext, "Email and password fields cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         // Check if the passwords match
         if (password != confirmPassword) {
             Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()

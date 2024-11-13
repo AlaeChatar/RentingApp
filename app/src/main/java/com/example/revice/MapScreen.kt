@@ -32,8 +32,9 @@ class MapScreen : AppCompatActivity() {
         mapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
 
+
         // Set initial view properties
-        val startPoint = GeoPoint(153385.11, 213321.79)
+        val startPoint = GeoPoint(51.229853, 4.415380)
         mapView.controller.setZoom(12.0)
         mapView.controller.setCenter(startPoint)
 

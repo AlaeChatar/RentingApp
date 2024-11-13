@@ -72,6 +72,8 @@ class MainActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT).show()
                 }
             }
+        val intent = Intent(this, HomeScreen::class.java)
+        startActivity(intent)
     }
 
 }

@@ -76,4 +76,9 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    override fun onStart() {
+        super.onStart()
+        val intent = Intent(this, ReservationScreen::class.java)
+        startActivity(intent)
+    }
 }

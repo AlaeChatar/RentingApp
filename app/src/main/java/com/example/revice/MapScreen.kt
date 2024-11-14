@@ -10,43 +10,21 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 
 class MapScreen : AppCompatActivity() {
 
     private lateinit var mapView: MapView
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
+    private var currentMarker: Marker? = null // Variable to hold the current marker
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Initialize osmdroid configuration
-        Configuration.getInstance().load(applicationContext, android.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext))
-
-        setContentView(R.layout.activity_map_screen)
-
-        // Initialize the MapView
-        mapView = findViewById(R.id.mapView)
-        mapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
-        mapView.setMultiTouchControls(true)
-
-
-        // Set initial view properties
-        val startPoint = GeoPoint(51.229853, 4.415380)
-        mapView.controller.setZoom(12.0)
-        mapView.controller.setCenter(startPoint)
-
-        // Add a marker to the map
-        val marker = Marker(mapView)
-        marker.position = startPoint
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-        marker.title = "Start Point"
-        mapView.overlays.add(marker)
-
-        // Request permissions if necessary
-        requestPermissionsIfNecessary()
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_map_screen)
@@ -55,6 +33,53 @@ class MapScreen : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Initialize osmdroid configuration
+        Configuration.getInstance().setUserAgentValue(getPackageName());
+
+        // Initialize the MapView
+        mapView = findViewById(R.id.mapView)
+        mapView.setTileSource(TileSourceFactory.MAPNIK)
+        mapView.setMultiTouchControls(true)
+
+
+        // Set initial view properties
+        val startPoint = GeoPoint(51.229853, 4.415380)
+        mapView.controller.setZoom(15.0)
+        mapView.controller.setCenter(startPoint)
+
+        // Request permissions if necessary
+        requestPermissionsIfNecessary()
+
+        // Set up map events overlay for single tap detection
+        val mapEventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
+            override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
+                addMarkerAtLocation(p, "New Marker")
+                return true
+            }
+
+            override fun longPressHelper(p: GeoPoint): Boolean {
+                // Handle long press if needed
+                return false
+            }
+        })
+        mapView.overlays.add(mapEventsOverlay)
+    }
+
+    // Function to add a marker at a specified location with a title
+    private fun addMarkerAtLocation(location: GeoPoint, title: String) {
+        // Remove the previous marker if it exists
+        currentMarker?.let { mapView.overlays.remove(it) }
+
+        // Create and add a new marker
+        val marker = Marker(mapView).apply {
+            position = location
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            this.title = title
+        }
+        mapView.overlays.add(marker)
+        currentMarker = marker // Update the reference to the current marker
+        mapView.invalidate() // Refresh the map to display the new marker
     }
 
     override fun onResume() {

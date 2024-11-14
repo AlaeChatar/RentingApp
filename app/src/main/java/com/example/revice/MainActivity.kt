@@ -12,6 +12,10 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.revice.databinding.ActivityMainBinding
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,6 +24,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize Firebase
+        FirebaseApp.initializeApp(this)
+
 
         auth = FirebaseAuth.getInstance()
 
@@ -76,10 +84,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-
         if(auth.currentUser != null){
             val intent = Intent(this, HomeScreen::class.java)
             startActivity(intent)
         }
+
     }
 }

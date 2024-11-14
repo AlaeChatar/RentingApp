@@ -2,4 +2,6 @@
     <string name="app_name">Revice</string>
     <string name="email">email</string>
     <string name="password">password</string>
+    <string name="btnlocation">Search radius</string>
+    <string name="btnbook">+ Book</string>
 </resources>

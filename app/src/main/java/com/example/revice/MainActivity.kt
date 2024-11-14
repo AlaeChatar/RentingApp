@@ -24,8 +24,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         // Initialize Firebase
         FirebaseApp.initializeApp(this)
+
 
         auth = FirebaseAuth.getInstance()
 
@@ -56,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun signIn(email: String, password: String) {
         // Check if email or password fields are empty
-        if (email.isEmpty() && password.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty()) {
             Toast.makeText(baseContext, "Email and password fields cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
@@ -69,19 +71,23 @@ class MainActivity : AppCompatActivity() {
                     val user = auth.currentUser
                     Toast.makeText(baseContext, "Authentication successful for ${user?.email}",
                         Toast.LENGTH_SHORT).show()
+
+                    val intent = Intent(this, HomeScreen::class.java)
+                    startActivity(intent)
                 } else {
                     // If sign in fails, display a message to the user.
                     Toast.makeText(baseContext, "Authentication failed: ${task.exception?.message}",
                         Toast.LENGTH_SHORT).show()
                 }
             }
-        val intent = Intent(this, HomeScreen::class.java)
-        startActivity(intent)
     }
 
     override fun onStart() {
         super.onStart()
-        val intent = Intent(this, ReservationScreen::class.java)
-        startActivity(intent)
+        if(auth.currentUser != null){
+            val intent = Intent(this, HomeScreen::class.java)
+            startActivity(intent)
+        }
+
     }
 }

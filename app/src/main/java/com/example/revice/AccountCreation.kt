@@ -9,16 +9,19 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.revice.databinding.ActivityAccountCreationBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class AccountCreation : AppCompatActivity() {
 
     private lateinit var signUpBinding: ActivityAccountCreationBinding
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         signUpBinding = ActivityAccountCreationBinding.inflate(layoutInflater)
 
@@ -48,7 +51,7 @@ class AccountCreation : AppCompatActivity() {
 
     private fun registerUser(email: String, password: String, confirmPassword: String) {
         // Check if email or password fields are empty
-        if (email.isEmpty() && password.isEmpty() && confirmPassword.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(baseContext, "Email and password fields cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
@@ -69,6 +72,22 @@ class AccountCreation : AppCompatActivity() {
                         baseContext, "Registration successful for ${user?.email}",
                         Toast.LENGTH_SHORT
                     ).show()
+
+                    val deviceList = emptyList<Devices>()
+
+                    val userData = hashMapOf(
+                        "userId" to user?.uid,
+                        "email" to user?.email,
+                        "devices" to deviceList
+                    )
+
+                    db.collection("users")
+                        .document(user!!.uid)
+                        .set(userData)
+                        .addOnCompleteListener{
+                            val intent = Intent(this, MainActivity::class.java)
+                            startActivity(intent)
+                        }
                 } else {
                     // If registration fails, display a message to the user.
                     Toast.makeText(
@@ -77,9 +96,6 @@ class AccountCreation : AppCompatActivity() {
                     ).show()
                 }
             }
-
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
     }
 
 }

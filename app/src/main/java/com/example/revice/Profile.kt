@@ -1,5 +1,6 @@
 package com.example.revice
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +29,12 @@ class Profile : AppCompatActivity() {
             insets
         }
 
+        val btnDevices = profileBinding.btnDevices
 
+        btnDevices.setOnClickListener{
+            auth.signOut()
+            var intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

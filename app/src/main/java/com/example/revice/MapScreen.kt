@@ -1,8 +1,10 @@
 package com.example.revice
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -20,8 +22,10 @@ import org.osmdroid.views.overlay.Marker
 class MapScreen : AppCompatActivity() {
 
     private lateinit var mapView: MapView
+    private lateinit var btnArea: Button // Button to send GeoPoint
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private var currentMarker: Marker? = null // Variable to hold the current marker
+    private var currentGeoPoint: GeoPoint? = null // Variable to store the current GeoPoint
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +38,9 @@ class MapScreen : AppCompatActivity() {
             insets
         }
 
+        // Request permissions if necessary
+        requestPermissionsIfNecessary()
+
         // Initialize osmdroid configuration
         Configuration.getInstance().setUserAgentValue(getPackageName());
 
@@ -42,14 +49,13 @@ class MapScreen : AppCompatActivity() {
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
 
-
         // Set initial view properties
         val startPoint = GeoPoint(51.229853, 4.415380)
         mapView.controller.setZoom(15.0)
         mapView.controller.setCenter(startPoint)
 
-        // Request permissions if necessary
-        requestPermissionsIfNecessary()
+        // Initialize button
+        btnArea = findViewById(R.id.btnArea)
 
         // Set up map events overlay for single tap detection
         val mapEventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
@@ -64,6 +70,16 @@ class MapScreen : AppCompatActivity() {
             }
         })
         mapView.overlays.add(mapEventsOverlay)
+
+        // Button to send the location to the next screen
+        btnArea.setOnClickListener {
+            currentMarker?.let { geoPoint ->
+                // Send the GeoPoint to ReservationScreen
+                val intent = Intent(this, ReservationScreen::class.java)
+                intent.putExtra("geopoint", geoPoint.position.toString())
+                startActivity(intent)
+            }
+        }
     }
 
     // Function to add a marker at a specified location with a title

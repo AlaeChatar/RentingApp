@@ -30,6 +30,9 @@ class Profile : AppCompatActivity() {
         }
 
         val btnDevices = profileBinding.btnDevices
+        val etEmail = profileBinding.etEmailDB
+
+        etEmail.setText("${auth.currentUser?.email}")
 
         btnDevices.setOnClickListener{
             auth.signOut()

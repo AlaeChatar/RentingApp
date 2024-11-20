@@ -35,15 +35,21 @@ class Profile : AppCompatActivity() {
             insets
         }
 
+        val btnLogOut = profileBinding.btnLogOut
         val btnDevices = profileBinding.btnDevices
         val etEmail = profileBinding.etEmailDB
         val btnChangeEmail = profileBinding.btnChangeEmail
 
         etEmail.setText("${auth.currentUser?.email}")
 
-        btnDevices.setOnClickListener{
+        btnLogOut.setOnClickListener{
             auth.signOut()
             var intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnDevices.setOnClickListener{
+            var intent = Intent(this, DeviceCreation::class.java)
             startActivity(intent)
         }
 

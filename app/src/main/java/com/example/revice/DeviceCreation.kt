@@ -3,6 +3,9 @@ package com.example.revice
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.ArrayAdapter
@@ -42,7 +45,10 @@ class DeviceCreation : AppCompatActivity() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
                 val uri = data?.data
-                ivPicture.setImageURI(uri) // Display the selected image
+                uri?.let {
+                    val resizedBitmap = resizeImage(uri)
+                    ivPicture.setImageBitmap(resizedBitmap) // Load the resized bitmap into the ImageView
+                }
             }
         }
 
@@ -73,15 +79,14 @@ class DeviceCreation : AppCompatActivity() {
         }
     }
 
-    private fun requestPermissionsIfNecessary() {
-        val permissions = arrayOf(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-        )
-        val permissionsToRequest = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 1)
-        }
+    private fun resizeImage(uri: Uri): Bitmap {
+        val inputStream = contentResolver.openInputStream(uri)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+
+        // Define the target size
+        val targetWidth = 500
+        val targetHeight = (originalBitmap.height * targetWidth) / originalBitmap.width
+
+        return Bitmap.createScaledBitmap(originalBitmap, targetWidth, targetHeight, true)
     }
 }

@@ -49,7 +49,7 @@ class Profile : AppCompatActivity() {
         }
 
         btnDevices.setOnClickListener{
-            var intent = Intent(this, DeviceCreation::class.java)
+            var intent = Intent(this, Devices::class.java)
             startActivity(intent)
         }
 

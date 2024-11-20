@@ -4,4 +4,6 @@
     <string name="password">password</string>
     <string name="btnlocation">Search radius</string>
     <string name="btnbook">+ Book</string>
+    <string name="btnAdd">+ Add</string>
+    <string name="txtDevices">My Devices</string>
 </resources>

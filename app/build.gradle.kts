@@ -54,4 +54,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.osmdroid.android)
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("androidx.activity:activity-compose:1.9.3")
 }

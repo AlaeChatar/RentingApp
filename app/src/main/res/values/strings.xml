@@ -6,4 +6,12 @@
     <string name="btnbook">+ Book</string>
     <string name="btnAdd">+ Add</string>
     <string name="txtDevices">My Devices</string>
+    <string name="btnCreate">Create</string>
+    <string-array name="category">
+        <item>Cooking</item>
+        <item>Cleaning</item>
+        <item>Gardening</item>
+        <item>Woodworking</item>
+        <item>Metalworking</item>
+    </string-array>
 </resources>

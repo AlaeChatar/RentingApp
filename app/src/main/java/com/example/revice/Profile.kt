@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.revice.databinding.ActivityProfileBinding
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -39,6 +40,7 @@ class Profile : AppCompatActivity() {
         val btnDevices = profileBinding.btnDevices
         val etEmail = profileBinding.etEmailDB
         val btnChangeEmail = profileBinding.btnChangeEmail
+        val etCurPas = profileBinding.etCurrentPass
 
         etEmail.setText("${auth.currentUser?.email}")
 
@@ -54,29 +56,44 @@ class Profile : AppCompatActivity() {
         }
 
         btnChangeEmail.setOnClickListener{
-            auth.currentUser?.verifyBeforeUpdateEmail(etEmail.text.toString())?.addOnCompleteListener{ task ->
-                if (task.isSuccessful){
-                    db.collection("users")
-                        .document(auth.currentUser!!.uid)
-                        .update("email", etEmail.text.toString())
+            val credentials = EmailAuthProvider.getCredential(auth.currentUser!!.email!!, etCurPas.text.toString())
 
-                    Toast.makeText(
-                        baseContext, "Email updated succesfully",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else if (task.exception is FirebaseAuthInvalidCredentialsException) {
-                    Toast.makeText(
-                        baseContext, "Email update failed: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else if (task.exception is FirebaseAuthUserCollisionException){
-                    Toast.makeText(
-                        baseContext, "Email update failed: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+            auth.currentUser?.reauthenticate(credentials)?.addOnCompleteListener{ t ->
+                if (t.isSuccessful){
+                    auth.currentUser?.verifyBeforeUpdateEmail(etEmail.text.toString())?.addOnCompleteListener{ task ->
+                        if (task.isSuccessful){
+                            db.collection("users")
+                                .document(auth.currentUser!!.uid)
+                                .update("email", etEmail.text.toString())
+
+                            Toast.makeText(
+                                baseContext, "Verification mail has been sent!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            auth.signOut()
+                            var intent = Intent(this, MainActivity::class.java)
+                            startActivity(intent)
+                        } else if (task.exception is FirebaseAuthInvalidCredentialsException) {
+                            Toast.makeText(
+                                baseContext, "Email update failed: ${task.exception?.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else if (task.exception is FirebaseAuthUserCollisionException){
+                            Toast.makeText(
+                                baseContext, "Email update failed: ${task.exception?.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                baseContext, "Email update failed: ${task.exception?.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 } else {
                     Toast.makeText(
-                        baseContext, "Email update failed: ${task.exception?.message}",
+                        baseContext, "Email update failed: ${t.exception?.message}",
                         Toast.LENGTH_SHORT
                     ).show()
                 }

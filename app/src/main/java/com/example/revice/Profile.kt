@@ -82,6 +82,7 @@ class Profile : AppCompatActivity() {
                 "location" to etChangeLoc.text.toString()
             )
 
+            // SetOptions.merge() to merge if field doesn't exist yet
             db.collection("users")
                 .document(user!!.uid)
                 .set(userData, SetOptions.merge())

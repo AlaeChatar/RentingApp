@@ -41,6 +41,9 @@ class Profile : AppCompatActivity() {
         val etEmail = profileBinding.etEmailDB
         val btnChangeEmail = profileBinding.btnChangeEmail
         val etCurPas = profileBinding.etCurrentPass
+        val btnChangePass = profileBinding.btnChangePass
+        val etChangeLoc = profileBinding.etChangeLoc
+        val btnLocation = profileBinding.btnChangeLocation
 
         etEmail.setText("${auth.currentUser?.email}")
 
@@ -53,6 +56,14 @@ class Profile : AppCompatActivity() {
         btnDevices.setOnClickListener{
             var intent = Intent(this, Devices::class.java)
             startActivity(intent)
+        }
+
+        btnLocation.setOnClickListener{
+            
+        }
+
+        btnChangePass.setOnClickListener{
+
         }
 
         btnChangeEmail.setOnClickListener{

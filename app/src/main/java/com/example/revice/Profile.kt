@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 
 class Profile : AppCompatActivity() {
 
@@ -45,7 +46,23 @@ class Profile : AppCompatActivity() {
         val etChangeLoc = profileBinding.etChangeLoc
         val btnLocation = profileBinding.btnChangeLocation
 
-        etEmail.setText("${auth.currentUser?.email}")
+        // Set up a real-time listener on the user's Firestore document
+        db.collection("users").document(auth.currentUser!!.uid)
+            .addSnapshotListener { documentSnapshot, e ->
+                if (e != null) {
+                    Toast.makeText(this, "Failed to listen for updates: ${e.message}", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+
+                if (documentSnapshot != null && documentSnapshot.exists()) {
+                    // Update the email and location fields when the document changes
+                    val email = documentSnapshot.getString("email")
+                    val location = documentSnapshot.getString("location")
+
+                    email?.let { etEmail.setText(it) }
+                    location?.let { etChangeLoc.setText(it) }
+                }
+            }
 
         btnLogOut.setOnClickListener{
             auth.signOut()
@@ -59,7 +76,20 @@ class Profile : AppCompatActivity() {
         }
 
         btnLocation.setOnClickListener{
-            
+            val user = auth.currentUser
+
+            val userData = hashMapOf(
+                "location" to etChangeLoc.text.toString()
+            )
+
+            db.collection("users")
+                .document(user!!.uid)
+                .set(userData, SetOptions.merge())
+
+            Toast.makeText(
+                baseContext, "Location has been updated",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         btnChangePass.setOnClickListener{

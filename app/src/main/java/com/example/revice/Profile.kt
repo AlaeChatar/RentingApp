@@ -45,6 +45,9 @@ class Profile : AppCompatActivity() {
         val btnChangePass = profileBinding.btnChangePass
         val etChangeLoc = profileBinding.etChangeLoc
         val btnLocation = profileBinding.btnChangeLocation
+        val etOldPass = profileBinding.etOldPass
+        val etNewPassword = profileBinding.etNewPass1
+        val etNewPassword2 = profileBinding.etNewPass2
 
         // Set up a real-time listener on the user's Firestore document
         db.collection("users").document(auth.currentUser!!.uid)
@@ -94,7 +97,46 @@ class Profile : AppCompatActivity() {
         }
 
         btnChangePass.setOnClickListener{
+            if (etOldPass.text.toString().isBlank() || etNewPassword.text.toString().isBlank() || etNewPassword2.text.toString().isBlank()) {
+                Toast.makeText(
+                    baseContext, "Please fill in all fields.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
 
+            if (etNewPassword.text.toString() != etNewPassword2.text.toString()) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val currentUserEmail = auth.currentUser!!.email!!
+
+            // Reauthenticate the user
+            val credentials = EmailAuthProvider.getCredential(currentUserEmail, etOldPass.text.toString())
+            auth.currentUser?.reauthenticate(credentials)?.addOnCompleteListener { reauthTask ->
+                if (reauthTask.isSuccessful) {
+                    // Update the password
+                    auth.currentUser?.updatePassword(etNewPassword.text.toString())?.addOnCompleteListener { updateTask ->
+                        if (updateTask.isSuccessful) {
+                            Toast.makeText(
+                                baseContext, "Password updated successfully.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                baseContext, "Password update failed: ${updateTask.exception?.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(
+                        baseContext, "Reauthentication failed: ${reauthTask.exception?.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
 
         btnChangeEmail.setOnClickListener{

@@ -2,23 +2,18 @@ package com.example.revice
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.revice.databinding.ActivityDeviceCreationBinding
@@ -26,6 +21,7 @@ import com.example.revice.models.Device
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+
 
 class DeviceCreation : AppCompatActivity() {
     private lateinit var creationBinding: ActivityDeviceCreationBinding
@@ -69,7 +65,6 @@ class DeviceCreation : AppCompatActivity() {
             pickImageLauncher.launch(intent)
         }
 
-
         val spinner: Spinner = creationBinding.spnCategory
         // Create an ArrayAdapter using the string array and a default spinner layout.
         ArrayAdapter.createFromResource(
@@ -77,16 +72,13 @@ class DeviceCreation : AppCompatActivity() {
             R.array.category,
             android.R.layout.simple_spinner_item
         ).also { adapter ->
-            // Specify the layout to use when the list of choices appears.
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            // Apply the adapter to the spinner.
             spinner.adapter = adapter
         }
 
         val btnCreate = creationBinding.btnCreate
-        btnCreate.setOnClickListener{
-            var intent = Intent(this, Devices::class.java)
-            startActivity(intent)
+        btnCreate.setOnClickListener {
+            createDeviceAndStore()
         }
     }
 
@@ -96,59 +88,76 @@ class DeviceCreation : AppCompatActivity() {
         val deviceType = creationBinding.spnCategory.selectedItem.toString()
 
         if (deviceName.isBlank() || deviceType.isBlank()) {
-            // Ensure required fields are not empty
-            Toast.makeText(
-                baseContext, "Device name and type are required.",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(baseContext, "Device name and type are required.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val user = auth.currentUser
+        if (user == null) {
+            Toast.makeText(this, "User not authenticated.", Toast.LENGTH_SHORT).show()
             return
         }
 
         // Create a Device object
         val device = Device(
-            deviceId = System.currentTimeMillis().toString(), // Unique ID
+            deviceId = System.currentTimeMillis().toString(),
             deviceName = deviceName,
             devicePrice = devicePrice,
             deviceType = deviceType
         )
 
-        // Add the device to Firestore under the user's devices array
-        val user = auth.currentUser
-        if (user != null) {
-            val userDevicesPath = db.collection("users").document(user.uid)
+        val userDevicesPath = db.collection("users").document(user.uid)
 
-            userDevicesPath.update("devices", FieldValue.arrayUnion(device))
-                .addOnSuccessListener {
-                    Toast.makeText(
-                        baseContext, "Device added successfully.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    // Navigate to Devices activity
-                    val intent = Intent(this, Devices::class.java)
-                    startActivity(intent)
+        // Check if the user document exists
+        userDevicesPath.get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Document exists; update the devices array
+                    userDevicesPath.update("devices", FieldValue.arrayUnion(device.toMap()))
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Device added successfully.", Toast.LENGTH_SHORT).show()
+                            navigateToDevices()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Failed to add device: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    // Document does not exist; create it with the devices array
+                    val deviceData = mapOf("devices" to listOf(device.toMap()))
+                    userDevicesPath.set(deviceData)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Device created and added successfully.", Toast.LENGTH_SHORT).show()
+                            navigateToDevices()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Failed to create document: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
                 }
-                .addOnFailureListener { e ->
-                    Toast.makeText(
-                        baseContext, "Failed to add device: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-        } else {
-            Toast.makeText(
-                baseContext, "User not authenticated.",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to check document existence: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun resizeImage(uri: Uri): Bitmap {
         val inputStream = contentResolver.openInputStream(uri)
         val originalBitmap = BitmapFactory.decodeStream(inputStream)
-
-        // Define the target size
         val targetWidth = 500
         val targetHeight = (originalBitmap.height * targetWidth) / originalBitmap.width
-
         return Bitmap.createScaledBitmap(originalBitmap, targetWidth, targetHeight, true)
+    }
+
+    private fun navigateToDevices() {
+        val intent = Intent(this, Devices::class.java)
+        startActivity(intent)
+    }
+
+    private fun Device.toMap(): Map<String, Any> {
+        return mapOf(
+            "deviceId" to deviceId,
+            "deviceName" to deviceName,
+            "devicePrice" to devicePrice,
+            "deviceType" to deviceType
+        )
     }
 }

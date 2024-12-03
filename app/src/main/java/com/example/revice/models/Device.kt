@@ -5,7 +5,7 @@ data class Device (
     val deviceName: String,
     val devicePrice: Double = 0.0,
     val deviceType: String,
-    val imageUrl: String? = null
+    val deviceImage: String = "" // Base64 image string
 )
 
 enum class DeviceType {Gardening, Cooking, Cleaning}

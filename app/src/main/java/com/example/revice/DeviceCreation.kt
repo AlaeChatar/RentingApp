@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Base64
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
@@ -21,13 +22,15 @@ import com.example.revice.models.Device
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-
+import com.google.firebase.firestore.SetOptions
+import java.io.ByteArrayOutputStream
 
 class DeviceCreation : AppCompatActivity() {
     private lateinit var creationBinding: ActivityDeviceCreationBinding
     private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private var base64Image: String? = null // Holds the encoded image
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +58,7 @@ class DeviceCreation : AppCompatActivity() {
                 uri?.let {
                     val resizedBitmap = resizeImage(uri)
                     ivPicture.setImageBitmap(resizedBitmap) // Load the resized bitmap into the ImageView
+                    base64Image = encodeImageToBase64(resizedBitmap) // Encode the image to Base64
                 }
             }
         }
@@ -92,6 +96,11 @@ class DeviceCreation : AppCompatActivity() {
             return
         }
 
+        if (base64Image == null) {
+            Toast.makeText(this, "Please select an image.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val user = auth.currentUser
         if (user == null) {
             Toast.makeText(this, "User not authenticated.", Toast.LENGTH_SHORT).show()
@@ -103,7 +112,8 @@ class DeviceCreation : AppCompatActivity() {
             deviceId = System.currentTimeMillis().toString(),
             deviceName = deviceName,
             devicePrice = devicePrice,
-            deviceType = deviceType
+            deviceType = deviceType,
+            deviceImage = base64Image!! // Add the encoded image
         )
 
         val userDevicesPath = db.collection("users").document(user.uid)
@@ -147,6 +157,13 @@ class DeviceCreation : AppCompatActivity() {
         return Bitmap.createScaledBitmap(originalBitmap, targetWidth, targetHeight, true)
     }
 
+    private fun encodeImageToBase64(bitmap: Bitmap): String {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+    }
+
     private fun navigateToDevices() {
         val intent = Intent(this, Devices::class.java)
         startActivity(intent)
@@ -157,7 +174,8 @@ class DeviceCreation : AppCompatActivity() {
             "deviceId" to deviceId,
             "deviceName" to deviceName,
             "devicePrice" to devicePrice,
-            "deviceType" to deviceType
+            "deviceType" to deviceType,
+            "deviceImage" to deviceImage // Include the encoded image
         )
     }
 }

@@ -12,6 +12,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,13 +22,23 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.revice.databinding.ActivityDeviceCreationBinding
+import com.example.revice.models.Device
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 
 class DeviceCreation : AppCompatActivity() {
     private lateinit var creationBinding: ActivityDeviceCreationBinding
     private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
+
         creationBinding = ActivityDeviceCreationBinding.inflate(layoutInflater)
 
         enableEdgeToEdge()
@@ -76,6 +87,57 @@ class DeviceCreation : AppCompatActivity() {
         btnCreate.setOnClickListener{
             var intent = Intent(this, Devices::class.java)
             startActivity(intent)
+        }
+    }
+
+    private fun createDeviceAndStore() {
+        val deviceName = creationBinding.etDeviceName.text.toString()
+        val devicePrice = creationBinding.etPrice.text.toString().toDoubleOrNull() ?: 0.0
+        val deviceType = creationBinding.spnCategory.selectedItem.toString()
+
+        if (deviceName.isBlank() || deviceType.isBlank()) {
+            // Ensure required fields are not empty
+            Toast.makeText(
+                baseContext, "Device name and type are required.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        // Create a Device object
+        val device = Device(
+            deviceId = System.currentTimeMillis().toString(), // Unique ID
+            deviceName = deviceName,
+            devicePrice = devicePrice,
+            deviceType = deviceType
+        )
+
+        // Add the device to Firestore under the user's devices array
+        val user = auth.currentUser
+        if (user != null) {
+            val userDevicesPath = db.collection("users").document(user.uid)
+
+            userDevicesPath.update("devices", FieldValue.arrayUnion(device))
+                .addOnSuccessListener {
+                    Toast.makeText(
+                        baseContext, "Device added successfully.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    // Navigate to Devices activity
+                    val intent = Intent(this, Devices::class.java)
+                    startActivity(intent)
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(
+                        baseContext, "Failed to add device: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        } else {
+            Toast.makeText(
+                baseContext, "User not authenticated.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 

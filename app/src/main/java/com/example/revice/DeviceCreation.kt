@@ -31,6 +31,7 @@ class DeviceCreation : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private var base64Image: String? = null // Holds the encoded image
+    private lateinit var location: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,45 +108,75 @@ class DeviceCreation : AppCompatActivity() {
             return
         }
 
-        // Create a Device object
-        val device = Device(
-            deviceId = System.currentTimeMillis().toString(),
-            deviceName = deviceName,
-            devicePrice = devicePrice,
-            deviceType = deviceType,
-            deviceImage = base64Image!! // Add the encoded image
-        )
-
-        val userDevicesPath = db.collection("users").document(user.uid)
-
-        // Check if the user document exists
-        userDevicesPath.get()
+        // Fetch the user's location from Firestore
+        val userDocRef = db.collection("users").document(user.uid)
+        userDocRef.get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // Document exists; update the devices array
-                    userDevicesPath.update("devices", FieldValue.arrayUnion(device.toMap()))
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Device added successfully.", Toast.LENGTH_SHORT).show()
-                            navigateToDevices()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Failed to add device: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
-                } else {
-                    // Document does not exist; create it with the devices array
-                    val deviceData = mapOf("devices" to listOf(device.toMap()))
-                    userDevicesPath.set(deviceData)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Device created and added successfully.", Toast.LENGTH_SHORT).show()
-                            navigateToDevices()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Failed to create document: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
+                    location = document.getString("location") ?: "Unknown Location"
                 }
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to check document existence: ${e.message}", Toast.LENGTH_SHORT).show()
+
+                // Create a Device object
+                val device = Device(
+                    deviceId = System.currentTimeMillis().toString(),
+                    deviceName = deviceName,
+                    devicePrice = devicePrice,
+                    deviceType = deviceType,
+                    deviceImage = base64Image!!, // Add the encoded image
+                    deviceLocation = location
+                )
+
+                val userDevicesPath = db.collection("users").document(user.uid)
+
+                // Check if the user document exists
+                userDevicesPath.get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            // Document exists; update the devices array
+                            userDevicesPath.update("devices", FieldValue.arrayUnion(device.toMap()))
+                                .addOnSuccessListener {
+                                    Toast.makeText(
+                                        this,
+                                        "Device added successfully.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navigateToDevices()
+                                }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        this,
+                                        "Failed to add device: ${e.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        } else {
+                            // Document does not exist; create it with the devices array
+                            val deviceData = mapOf("devices" to listOf(device.toMap()))
+                            userDevicesPath.set(deviceData)
+                                .addOnSuccessListener {
+                                    Toast.makeText(
+                                        this,
+                                        "Device created and added successfully.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navigateToDevices()
+                                }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        this,
+                                        "Failed to create document: ${e.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(
+                            this,
+                            "Failed to check document existence: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
             }
     }
 
@@ -175,7 +206,8 @@ class DeviceCreation : AppCompatActivity() {
             "deviceName" to deviceName,
             "devicePrice" to devicePrice,
             "deviceType" to deviceType,
-            "deviceImage" to deviceImage // Include the encoded image
+            "deviceImage" to deviceImage, // Include the encoded image
+            "deviceLocation" to deviceLocation
         )
     }
 }

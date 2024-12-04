@@ -34,6 +34,12 @@ class ReservationScreen : AppCompatActivity() {
             startActivity(intent)
         }
 
+        val btnBack = reservationBinding.ivBackReservation
+        btnBack.setOnClickListener {
+            val intent = Intent(this, HomeScreen::class.java)
+            startActivity(intent)
+        }
+
         val geoPointTextView: TextView = findViewById(R.id.textView)
 
         // Retrieve the GeoPoint from the Intent

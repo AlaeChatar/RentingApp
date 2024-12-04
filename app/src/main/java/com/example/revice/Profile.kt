@@ -48,6 +48,7 @@ class Profile : AppCompatActivity() {
         val etOldPass = profileBinding.etOldPass
         val etNewPassword = profileBinding.etNewPass1
         val etNewPassword2 = profileBinding.etNewPass2
+        val btnBack = profileBinding.ivBackProfile
 
         // Set up a real-time listener on the user's Firestore document
         db.collection("users").document(auth.currentUser!!.uid)
@@ -94,6 +95,11 @@ class Profile : AppCompatActivity() {
                 baseContext, "Location has been updated",
                 Toast.LENGTH_SHORT
             ).show()
+        }
+
+        btnBack.setOnClickListener {
+            val intent = Intent(this, HomeScreen::class.java)
+            startActivity(intent)
         }
 
         btnChangePass.setOnClickListener{

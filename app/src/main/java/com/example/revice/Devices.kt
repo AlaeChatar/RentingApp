@@ -40,6 +40,12 @@ class Devices : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        val btnBack = devicesBinding.ivBackDevices
+
+        btnBack.setOnClickListener{
+            val intent = Intent(this, Profile::class.java)
+            startActivity(intent)
+        }
 
         val btnAdd = devicesBinding.btnAdd
         btnAdd.setOnClickListener {

@@ -93,4 +93,13 @@
         </LinearLayout>
     </ScrollView>
 
+    <ImageView
+        android:id="@+id/ivBackDevices"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:rotation="270"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/round_navigation_white_48" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

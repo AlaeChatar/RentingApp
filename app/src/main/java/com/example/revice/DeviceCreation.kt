@@ -80,6 +80,12 @@ class DeviceCreation : AppCompatActivity() {
             spinner.adapter = adapter
         }
 
+        val btnBack = creationBinding.ivBackDeviceCrea
+        btnBack.setOnClickListener {
+            val intent = Intent(this, Devices::class.java)
+            startActivity(intent)
+        }
+
         val btnCreate = creationBinding.btnCreate
         btnCreate.setOnClickListener {
             createDeviceAndStore()

@@ -8,6 +8,7 @@
     <string name="txtDevices">My Devices</string>
     <string name="btnCreate">Create</string>
     <string-array name="category">
+        <item></item>
         <item>Gardening</item>
         <item>Cooking</item>
         <item>Cleaning</item>

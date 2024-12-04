@@ -5,10 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
-import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -73,7 +71,7 @@ class Devices : AppCompatActivity() {
     }
 
     private fun displayDevices(devicesList: List<Map<String, Any>>) {
-        val linearLayout = devicesBinding.root.findViewById<LinearLayout>(R.id.llDevices)
+        val linearLayout = devicesBinding.root.findViewById<LinearLayout>(R.id.llAllDevices)
 
         for (deviceMap in devicesList) {
             // Create a new LinearLayout for each device

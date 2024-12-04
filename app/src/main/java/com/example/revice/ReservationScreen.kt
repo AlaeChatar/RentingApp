@@ -3,14 +3,18 @@ package com.example.revice
 import android.content.Intent
 import android.os.Bundle
 import android.util.Base64
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.bumptech.glide.Glide
 import com.example.revice.databinding.ActivityReservationScreenBinding
 import com.example.revice.models.Device
 import com.google.firebase.auth.FirebaseAuth
@@ -18,8 +22,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import android.graphics.BitmapFactory
 import android.util.Log
 import android.widget.ArrayAdapter
-import android.widget.Spinner
-import com.bumptech.glide.Glide
 
 class ReservationScreen : AppCompatActivity() {
 
@@ -38,16 +40,30 @@ class ReservationScreen : AppCompatActivity() {
             insets
         }
 
+        // Initialize spinner and set up the listener
         val spinner: Spinner = reservationBinding.spnFilter
-        // Create an ArrayAdapter using the string array and a default spinner layout.
         ArrayAdapter.createFromResource(
             this,
-            R.array.category,
+            R.array.filter,
             android.R.layout.simple_spinner_item
         ).also { adapter ->
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             spinner.adapter = adapter
         }
+
+        spinner.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parentView: AdapterView<*>, selectedItemView: View?, position: Int, id: Long) {
+                // Get the selected category
+                val selectedCategory = parentView.getItemAtPosition(position).toString()
+
+                // Load devices based on the selected category
+                loadDevices(selectedCategory)
+            }
+
+            override fun onNothingSelected(parentView: AdapterView<*>) {
+                // Optionally, handle when no item is selected
+            }
+        })
 
         val btnLocation = reservationBinding.btnLocation
         btnLocation.setOnClickListener {
@@ -56,10 +72,10 @@ class ReservationScreen : AppCompatActivity() {
         }
 
         // Load and display devices
-        loadDevices()
+        loadDevices("All")
     }
 
-    private fun loadDevices() {
+    private fun loadDevices(selectedCategory: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         val db = FirebaseFirestore.getInstance()
@@ -88,18 +104,19 @@ class ReservationScreen : AppCompatActivity() {
                         val deviceImage = deviceMap["deviceImage"] as? String ?: return@forEach
                         val deviceLocation = deviceMap["deviceLocation"] as? String ?: return@forEach
 
-                        // Create a device object from the map
-                        val device = Device(
-                            deviceId = deviceMap["deviceId"] as? String ?: return@forEach,
-                            deviceName = deviceName,
-                            devicePrice = devicePrice,
-                            deviceType = deviceType,
-                            deviceImage = deviceImage,
-                            deviceLocation = deviceLocation
-                        )
-
-                        // Add the device to the list
-                        devicesList.add(device)
+                        // Only add the device if it matches the selected category
+                        if (selectedCategory == "All" || deviceType == selectedCategory) {
+                            val device = Device(
+                                deviceId = deviceMap["deviceId"] as? String ?: return@forEach,
+                                deviceName = deviceName,
+                                devicePrice = devicePrice,
+                                deviceType = deviceType,
+                                deviceImage = deviceImage,
+                                deviceLocation = deviceLocation
+                            )
+                            // Add the device to the list
+                            devicesList.add(device)
+                        }
                     }
                 }
 
@@ -113,7 +130,6 @@ class ReservationScreen : AppCompatActivity() {
                 Toast.makeText(this, "Failed to load devices: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
     }
-
 
     private fun displayDevices(devicesList: List<Device>) {
         val llAllDevices = reservationBinding.llAllDevices

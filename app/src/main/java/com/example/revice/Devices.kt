@@ -78,7 +78,6 @@ class Devices : AppCompatActivity() {
             val deviceItemView = LinearLayout(this)
             deviceItemView.orientation = LinearLayout.HORIZONTAL
             deviceItemView.setPadding(16, 16, 16, 16)
-            deviceItemView.setBackgroundColor(resources.getColor(android.R.color.white))
             deviceItemView.layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT

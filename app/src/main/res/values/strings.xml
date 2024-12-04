@@ -13,4 +13,10 @@
         <item>Cooking</item>
         <item>Cleaning</item>
     </string-array>
+    <string-array name="filter">
+        <item>All</item>
+        <item>Gardening</item>
+        <item>Cooking</item>
+        <item>Cleaning</item>
+    </string-array>
 </resources>

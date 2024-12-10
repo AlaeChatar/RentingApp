@@ -5,10 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
-import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -17,6 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.revice.databinding.ActivityDevicesBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 class Devices : AppCompatActivity() {
@@ -79,19 +79,18 @@ class Devices : AppCompatActivity() {
     }
 
     private fun displayDevices(devicesList: List<Map<String, Any>>) {
-        val linearLayout = devicesBinding.root.findViewById<LinearLayout>(R.id.llDevices)
+        val linearLayout = devicesBinding.root.findViewById<LinearLayout>(R.id.llAllDevices)
+        linearLayout.removeAllViews() // Clear the list before adding new items
 
         for (deviceMap in devicesList) {
             // Create a new LinearLayout for each device
             val deviceItemView = LinearLayout(this)
             deviceItemView.orientation = LinearLayout.HORIZONTAL
             deviceItemView.setPadding(16, 16, 16, 16)
-            deviceItemView.setBackgroundColor(resources.getColor(android.R.color.white))
             deviceItemView.layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            (deviceItemView.layoutParams as LinearLayout.LayoutParams).marginEnd = 8
 
             // Create ImageView for device image
             val ivDeviceImage = ImageView(this)
@@ -104,7 +103,7 @@ class Devices : AppCompatActivity() {
             textLayout.orientation = LinearLayout.VERTICAL
             textLayout.layoutParams = LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
-            )
+            ) // Set weight to 1 to push the button to the right
 
             val tvDeviceName = TextView(this)
             tvDeviceName.textSize = 18f
@@ -134,17 +133,51 @@ class Devices : AppCompatActivity() {
             textLayout.addView(tvDeviceType)
             textLayout.addView(tvDevicePrice)
 
-            // Add ImageView and TextLayout to the main device item view
+            // Create a delete button
+            val btnDelete = Button(this)
+            btnDelete.text = "Delete"
+            btnDelete.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            btnDelete.setOnClickListener {
+                deleteDevice(deviceMap)
+            }
+
+            // Add ImageView, TextLayout, and Button to the main device item view
             deviceItemView.addView(ivDeviceImage)
             deviceItemView.addView(textLayout)
+            deviceItemView.addView(btnDelete) // Button is added last, aligning it to the right
 
             // Add the device item view to the parent layout
             linearLayout.addView(deviceItemView)
         }
     }
 
+
     private fun decodeBase64(base64String: String): Bitmap {
         val decodedByteArray = Base64.decode(base64String, Base64.DEFAULT)
         return BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.size)
     }
+
+    private fun deleteDevice(deviceMap: Map<String, Any>) {
+        val user = auth.currentUser
+        if (user != null) {
+            val userDevicesPath = db.collection("users").document(user.uid)
+
+            userDevicesPath.update("devices", FieldValue.arrayRemove(deviceMap))
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Device deleted successfully.", Toast.LENGTH_SHORT).show()
+                    fetchDevices() // Refresh the device list
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(
+                        this,
+                        "Failed to delete device: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        }
+    }
+
 }

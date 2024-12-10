@@ -58,4 +58,5 @@ dependencies {
     implementation(libs.osmdroid.android)
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("com.github.bumptech.glide:glide:4.14.2")
 }

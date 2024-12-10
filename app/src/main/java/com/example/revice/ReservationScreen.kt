@@ -22,6 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import android.graphics.BitmapFactory
 import android.util.Log
 import android.widget.ArrayAdapter
+import android.widget.Button
 
 class ReservationScreen : AppCompatActivity() {
 
@@ -135,9 +136,14 @@ class ReservationScreen : AppCompatActivity() {
         val llAllDevices = reservationBinding.llAllDevices
         llAllDevices.removeAllViews() // Clear existing views
 
-        // Ensure that devicesList is not empty
         if (devicesList.isEmpty()) {
-            Toast.makeText(this, "No devices available", Toast.LENGTH_SHORT).show()
+            // Show a message if no devices are available
+            val noDevicesMessage = TextView(this).apply {
+                text = "No devices available"
+                textSize = 16f
+                setPadding(16, 16, 16, 16)
+            }
+            llAllDevices.addView(noDevicesMessage)
             return
         }
 
@@ -151,55 +157,90 @@ class ReservationScreen : AppCompatActivity() {
                 ).apply { bottomMargin = 8 }
             }
 
-            // Create ImageView and load Base64 decoded image using Glide
+            // ImageView for the device image
             val ivAllDeviceImage = ImageView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(100, 100).apply {
                     marginEnd = 16
                 }
-                // Glide automatically handles Base64 image loading
                 val decodedString = Base64.decode(device.deviceImage, Base64.DEFAULT)
                 val decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
                 Glide.with(this@ReservationScreen)
                     .load(decodedBitmap)
-                    .into(this) // Use Glide to load the bitmap efficiently
+                    .into(this)
             }
             deviceLayout.addView(ivAllDeviceImage)
 
-            // Layout for text content
+            // Text Layout for device details
             val textLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             }
 
-            // Device name
-            val tvAllDeviceName = TextView(this).apply {
-                text = device.deviceName
-                textSize = 18f
-            }
-
-            // Device type
-            val tvAllDeviceType = TextView(this).apply {
-                text = device.deviceType
-                setPadding(0, 4, 0, 0)
-            }
-
-            // Device price
-            val tvAllDevicePrice = TextView(this).apply {
+            // Add device details to text layout
+            textLayout.addView(TextView(this).apply { text = device.deviceName; textSize = 18f })
+            textLayout.addView(TextView(this).apply { text = device.deviceType; setPadding(0, 4, 0, 0) })
+            textLayout.addView(TextView(this).apply {
                 text = "$${device.devicePrice}"
                 setPadding(0, 4, 0, 0)
                 setTextColor(getColor(android.R.color.holo_green_dark))
+            })
+
+            // Add "Book" Button
+            val btnBook = Button(this).apply {
+                text = "Book"
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                setOnClickListener {
+                    bookDevice(device, this) // Pass button reference to bookDevice
+                }
             }
-
-            // Add text views to the text layout
-            textLayout.addView(tvAllDeviceName)
-            textLayout.addView(tvAllDeviceType)
-            textLayout.addView(tvAllDevicePrice)
-
-            // Add the text layout to the device layout
             deviceLayout.addView(textLayout)
+            deviceLayout.addView(btnBook)
 
-            // Finally, add the entire device layout to the list of devices
             llAllDevices.addView(deviceLayout)
         }
+    }
+
+    private fun bookDevice(device: Device, btnBook: Button) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        // Reference to the current user's Firestore document
+        val currentUserDocRef = db.collection("users").document(currentUserId)
+
+        // Convert Device object to a Map (Firestore expects a map for array operations)
+        val deviceMap = mapOf(
+            "deviceId" to device.deviceId,
+            "deviceName" to device.deviceName,
+            "devicePrice" to device.devicePrice,
+            "deviceType" to device.deviceType,
+            "deviceImage" to device.deviceImage,
+            "deviceLocation" to device.deviceLocation
+        )
+
+        // Disable the button immediately to prevent multiple clicks
+        btnBook.isEnabled = false
+        btnBook.text = "Booked"
+
+        // Add the device to the "reservations" array
+        currentUserDocRef.update(
+            "reservations",
+            com.google.firebase.firestore.FieldValue.arrayUnion(deviceMap)
+        )
+            .addOnSuccessListener {
+                Toast.makeText(this, "Device added to reservations!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                // Re-enable the button if the operation fails
+                btnBook.isEnabled = true
+                btnBook.text = "Book"
+                Toast.makeText(
+                    this,
+                    "Failed to book device: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
     }
 }

@@ -91,12 +91,6 @@
 
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/btnDelete"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:text="@string/btnDelete"
-                    android:backgroundTint="@color/red" />
             </LinearLayout>
 
         </LinearLayout>

@@ -37,7 +37,7 @@ class ReservationScreen : AppCompatActivity() {
 
     private lateinit var reservationBinding: ActivityReservationScreenBinding
     private var selectedLocation: GeoPoint? = null
-    
+
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private val mapActivityLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -100,13 +100,6 @@ class ReservationScreen : AppCompatActivity() {
             spinner.adapter = adapter
         }
 
-        val btnBack = reservationBinding.ivBackReservation
-        btnBack.setOnClickListener {
-            val intent = Intent(this, HomeScreen::class.java)
-            startActivity(intent)
-        }
-
-        val geoPointTextView: TextView = findViewById(R.id.textView)
         spinner.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
             @RequiresApi(Build.VERSION_CODES.TIRAMISU)
             override fun onItemSelected(parentView: AdapterView<*>, selectedItemView: View?, position: Int, id: Long) {
@@ -122,6 +115,12 @@ class ReservationScreen : AppCompatActivity() {
             }
         })
 
+        val btnBack = reservationBinding.ivBackReservation
+        btnBack.setOnClickListener {
+            val intent = Intent(this, HomeScreen::class.java)
+            startActivity(intent)
+        }
+
         val btnLocation = reservationBinding.btnLocation
         btnLocation.setOnClickListener {
             val intent = Intent(this, MapScreen::class.java)
@@ -134,18 +133,18 @@ class ReservationScreen : AppCompatActivity() {
 
     private fun calculateDistance(point1: GeoPoint, point2: GeoPoint): Double {
         val r = 6371 // Earth's radius in kilometers
-        
+
         val lat1 = Math.toRadians(point1.latitude)
         val lat2 = Math.toRadians(point2.latitude)
         val dLat = Math.toRadians(point2.latitude - point1.latitude)
         val dLon = Math.toRadians(point2.longitude - point1.longitude)
-        
+
         val a = sin(dLat/2) * sin(dLat/2) +
                 cos(lat1) * cos(lat2) *
                 sin(dLon/2) * sin(dLon/2)
-        
+
         val c = 2 * atan2(sqrt(a), sqrt(1-a))
-        
+
         return r * c
     }
 
@@ -157,7 +156,7 @@ class ReservationScreen : AppCompatActivity() {
         try {
             // Use the pre-Tiramisu synchronous method
             val addresses = geocoder.getFromLocationName(fullAddress, 1)
-            
+
             if (addresses != null && addresses.isNotEmpty()) {
                 val location = addresses[0]
                 callback(GeoPoint(location.latitude, location.longitude))
@@ -166,7 +165,7 @@ class ReservationScreen : AppCompatActivity() {
                 val streetOnly = address.substringBefore(" ")
                 val fallbackAddress = "$streetOnly, Antwerp, Belgium"
                 val fallbackAddresses = geocoder.getFromLocationName(fallbackAddress, 1)
-                
+
                 if (fallbackAddresses != null && fallbackAddresses.isNotEmpty()) {
                     val fallbackLocation = fallbackAddresses[0]
                     callback(GeoPoint(fallbackLocation.latitude, fallbackLocation.longitude))
@@ -182,139 +181,120 @@ class ReservationScreen : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun loadDevices(selectedCategory: String) {
-            try {
+        try {
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: run {
                 Log.e("ReservationScreen", "No user ID found")
-                displayDevices(emptyList())
+                displayDevices(emptyList(), emptyList())
                 return
             }
-            
+
             val db = FirebaseFirestore.getInstance()
             Log.d("ReservationScreen", "Starting device load - Location: $selectedLocation, Category: $selectedCategory")
 
-            db.collection("users")
-                .get()
-                .addOnSuccessListener { querySnapshot ->
-                    try {
-                        val devicesList = mutableListOf<Device>()
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { userDocument ->
+                    val reservations = userDocument.get("reservations") as? List<Map<String, Any>> ?: emptyList()
+                    val reservationIds = reservations.mapNotNull { it["deviceId"] as? String }
 
-                        // If location is selected, process devices with location filtering
-                        if (selectedLocation != null) {
-                            // First, collect all eligible devices
-                            val eligibleDevices = querySnapshot.documents
-                                .filter { it.id != userId }
-                                .flatMap { document ->
-                                    (document.get("devices") as? List<Map<String, Any>> ?: emptyList())
-                                        .filter { deviceMap ->
-                                            val deviceType = deviceMap["deviceType"] as? String
-                                            selectedCategory == "All" || deviceType == selectedCategory
+                    db.collection("users")
+                        .get()
+                        .addOnSuccessListener { querySnapshot ->
+                            try {
+                                val devicesList = mutableListOf<Device>()
+
+                                if (selectedLocation != null) {
+                                    val eligibleDevices = querySnapshot.documents
+                                        .filter { it.id != userId }
+                                        .flatMap { document ->
+                                            (document.get("devices") as? List<Map<String, Any>> ?: emptyList())
+                                                .filter { deviceMap ->
+                                                    val deviceType = deviceMap["deviceType"] as? String
+                                                    selectedCategory == "All" || deviceType == selectedCategory
+                                                }
                                         }
-                                }
 
-                            Log.d("ReservationScreen", "Found ${eligibleDevices.size} eligible devices")
+                                    if (eligibleDevices.isEmpty()) {
+                                        runOnUiThread { displayDevices(emptyList(), reservationIds) }
+                                        return@addOnSuccessListener
+                                    }
 
-                            if (eligibleDevices.isEmpty()) {
-                                runOnUiThread { displayDevices(emptyList()) }
-                                return@addOnSuccessListener
-                            }
+                                    var processedCount = 0
+                                    eligibleDevices.forEach { deviceMap ->
+                                        try {
+                                            val deviceLocation = deviceMap["deviceLocation"] as? String ?: return@forEach
+                                            addressToGeoPoint(deviceLocation) { deviceGeoPoint ->
+                                                processedCount++
+                                                if (deviceGeoPoint != null) {
+                                                    val distance = calculateDistance(selectedLocation!!, deviceGeoPoint)
+                                                    if (distance <= 1.0) {
+                                                        val device = mapToDevice(deviceMap, deviceLocation)
+                                                        devicesList.add(device)
+                                                    }
+                                                }
 
-                            // Process each device location
-                            var processedCount = 0
-                            eligibleDevices.forEach { deviceMap ->
-                                try {
-                                    val deviceLocation = deviceMap["deviceLocation"] as? String ?: return@forEach
-                                    addressToGeoPoint(deviceLocation) { deviceGeoPoint ->
-                                        processedCount++
-                                        
-                                        if (deviceGeoPoint != null) {
-                                            val distance = calculateDistance(selectedLocation!!, deviceGeoPoint)
-                                            if (distance <= 1.0) {
-                                                val device = Device(
-                                                    deviceId = deviceMap["deviceId"] as? String ?: return@addressToGeoPoint,
-                                                    deviceName = deviceMap["deviceName"] as? String ?: return@addressToGeoPoint,
-                                                    devicePrice = (deviceMap["devicePrice"] as? Number)?.toDouble() ?: return@addressToGeoPoint,
-                                                    deviceType = deviceMap["deviceType"] as? String ?: return@addressToGeoPoint,
-                                                    deviceImage = deviceMap["deviceImage"] as? String ?: return@addressToGeoPoint,
-                                                    deviceLocation = deviceLocation
-                                                )
-                                                devicesList.add(device)
-                                                Log.d("ReservationScreen", "Added device within radius: ${device.deviceName}")
+                                                if (processedCount == eligibleDevices.size) {
+                                                    runOnUiThread { displayDevices(devicesList, reservationIds) }
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            processedCount++
+                                            if (processedCount == eligibleDevices.size) {
+                                                runOnUiThread { displayDevices(devicesList, reservationIds) }
                                             }
                                         }
+                                    }
+                                } else {
+                                    querySnapshot.documents.forEach { document ->
+                                        if (document.id != userId) {
+                                            val devices = document.get("devices") as? List<Map<String, Any>> ?: return@forEach
 
-                                        // Display results when all devices are processed
-                                        if (processedCount == eligibleDevices.size) {
-                                            Log.d("ReservationScreen", "All devices processed, displaying ${devicesList.size} devices")
-                                            runOnUiThread { displayDevices(devicesList) }
+                                            devices.forEach { deviceMap ->
+                                                val deviceType = deviceMap["deviceType"] as? String ?: return@forEach
+                                                if (selectedCategory == "All" || deviceType == selectedCategory) {
+                                                    val device = mapToDevice(deviceMap)
+                                                    devicesList.add(device)
+                                                }
+                                            }
                                         }
                                     }
-                                } catch (e: Exception) {
-                                    Log.e("ReservationScreen", "Error processing device: ${e.message}")
-                                    processedCount++
-                                    if (processedCount == eligibleDevices.size) {
-                                        Log.d("ReservationScreen", "All devices processed, displaying ${devicesList.size} devices")
-                                        runOnUiThread { displayDevices(devicesList) }
-                                    }
+                                    runOnUiThread { displayDevices(devicesList, reservationIds) }
                                 }
+                            } catch (e: Exception) {
+                                runOnUiThread { displayDevices(emptyList(), emptyList()) }
                             }
-                        } else {
-                            // If no location is selected, process all devices
-                            querySnapshot.documents.forEach { document ->
-                                if (document.id != userId) {
-                                    val devices = document.get("devices") as? List<Map<String, Any>> ?: return@forEach
-                                    
-                                    devices.forEach { deviceMap ->
-                                        val deviceType = deviceMap["deviceType"] as? String ?: return@forEach
-                                        if (selectedCategory == "All" || deviceType == selectedCategory) {
-                                            val deviceName = deviceMap["deviceName"] as? String ?: return@forEach
-                                            val devicePrice = (deviceMap["devicePrice"] as? Number)?.toDouble() ?: return@forEach
-                                            val deviceImage = deviceMap["deviceImage"] as? String ?: return@forEach
-                                            val deviceLocation = deviceMap["deviceLocation"] as? String ?: return@forEach
-                                            val deviceId = deviceMap["deviceId"] as? String ?: return@forEach
-
-                                            devicesList.add(Device(
-                                                deviceId = deviceId,
-                                                deviceName = deviceName,
-                                                devicePrice = devicePrice,
-                                                deviceType = deviceType,
-                                                deviceImage = deviceImage,
-                                                deviceLocation = deviceLocation
-                                            ))
-                                        }
-                                    }
-                                }
-                            }
-
-                            Log.d("ReservationScreen", "All devices processed without location filter")
-                            runOnUiThread { displayDevices(devicesList) }
                         }
-                    } catch (e: Exception) {
-                        Log.e("ReservationScreen", "Error in device processing: ${e.message}")
-                        runOnUiThread { displayDevices(emptyList()) }
-                    }
+                        .addOnFailureListener { exception ->
+                            runOnUiThread {
+                                Toast.makeText(this, "Failed to load devices: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                displayDevices(emptyList(), emptyList())
+                            }
+                        }
                 }
-                .addOnFailureListener { exception ->
-                    Log.e("ReservationScreen", "Firestore query failed: ${exception.message}")
-                    runOnUiThread {
-                        Toast.makeText(this, "Failed to load devices: ${exception.message}", Toast.LENGTH_SHORT).show()
-                        displayDevices(emptyList())
-                    }
+                .addOnFailureListener { e ->
+                    Log.e("ReservationScreen", "Failed to get user reservations: ${e.message}")
+                    displayDevices(emptyList(), emptyList())
                 }
         } catch (e: Exception) {
-            Log.e("ReservationScreen", "Fatal error in loadDevices: ${e.message}")
-            runOnUiThread {
-                Toast.makeText(this, "An error occurred while loading devices", Toast.LENGTH_SHORT).show()
-                displayDevices(emptyList())
-            }
+            displayDevices(emptyList(), emptyList())
         }
     }
 
-    private fun displayDevices(devicesList: List<Device>) {
+    private fun mapToDevice(deviceMap: Map<String, Any>, location: String? = null): Device {
+        return Device(
+            deviceId = deviceMap["deviceId"] as? String ?: "",
+            deviceName = deviceMap["deviceName"] as? String ?: "",
+            devicePrice = (deviceMap["devicePrice"] as? Number)?.toDouble() ?: 0.0,
+            deviceType = deviceMap["deviceType"] as? String ?: "",
+            deviceImage = deviceMap["deviceImage"] as? String ?: "",
+            deviceLocation = location ?: deviceMap["deviceLocation"] as? String ?: ""
+        )
+    }
+
+    private fun displayDevices(devicesList: List<Device>, reservationIds: List<String>) {
         val llAllDevices = reservationBinding.llAllDevices
         llAllDevices.removeAllViews() // Clear existing views
 
         if (devicesList.isEmpty()) {
-            // Show a message if no devices are available
             val noDevicesMessage = TextView(this).apply {
                 text = "No devices available"
                 textSize = 16f
@@ -334,11 +314,8 @@ class ReservationScreen : AppCompatActivity() {
                 ).apply { bottomMargin = 8 }
             }
 
-            // ImageView for the device image
             val ivAllDeviceImage = ImageView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(100, 100).apply {
-                    marginEnd = 16
-                }
+                layoutParams = LinearLayout.LayoutParams(100, 100).apply { marginEnd = 16 }
                 val decodedString = Base64.decode(device.deviceImage, Base64.DEFAULT)
                 val decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
                 Glide.with(this@ReservationScreen)
@@ -347,42 +324,33 @@ class ReservationScreen : AppCompatActivity() {
             }
             deviceLayout.addView(ivAllDeviceImage)
 
-            // Text Layout for device details
             val textLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             }
 
-            // Add device details to text layout
             textLayout.addView(TextView(this).apply { text = device.deviceName; textSize = 18f })
-            textLayout.addView(TextView(this).apply { text = device.deviceType; setPadding(0, 4, 0, 0) })
+            textLayout.addView(TextView(this).apply { text = device.deviceType })
             textLayout.addView(TextView(this).apply {
                 text = "$${device.devicePrice}"
-                setPadding(0, 4, 0, 0)
                 setTextColor(getColor(android.R.color.holo_green_dark))
             })
-            textLayout.addView(TextView(this).apply {
-                text = device.deviceLocation
-                setPadding(0, 4, 0, 0)
-            })
+            textLayout.addView(TextView(this).apply { text = device.deviceLocation })
+            deviceLayout.addView(textLayout)
 
-            // Add "Book" Button
             val btnBook = Button(this).apply {
-                text = "Book"
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
+                text = if (reservationIds.contains(device.deviceId)) "Booked" else "Book"
+                isEnabled = !reservationIds.contains(device.deviceId)
                 setOnClickListener {
-                    bookDevice(device, this) // Pass button reference to bookDevice
+                    bookDevice(device, this)
                 }
             }
-            deviceLayout.addView(textLayout)
             deviceLayout.addView(btnBook)
 
             llAllDevices.addView(deviceLayout)
         }
     }
+
 
     private fun bookDevice(device: Device, btnBook: Button) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return

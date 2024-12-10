@@ -1,54 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/darkBackground"
     tools:context=".ReservationScreen">
 
+    <!-- Back Icon -->
+    <ImageView
+        android:id="@+id/ivBackReservation"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="Back"
+        android:rotation="270"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/round_navigation_white_48" />
+
+    <!-- Title Text -->
+    <TextView
+        android:id="@+id/tvReservationTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Device Reservation"
+        android:textColor="@color/lightText"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ivBackReservation" />
+
+    <!-- Filter Dropdown -->
+    <Spinner
+        android:id="@+id/spnFilter"
+        android:layout_width="162dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/rounded_edittext_dark"
+        android:paddingHorizontal="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvReservationTitle" />
+
+    <!-- Location Button -->
     <Button
         android:id="@+id/btnLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/btnlocation"
-        app:layout_constraintBottom_toTopOf="@+id/svAllDevices"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/rounded_button_dark"
+        android:elevation="4dp"
+        android:text="Location"
+        android:textColor="@color/darkButtonText"
+        android:textSize="14sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.803"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintStart_toEndOf="@id/spnFilter"
+        app:layout_constraintTop_toTopOf="@id/spnFilter" />
 
+    <!-- Device List ScrollView -->
     <ScrollView
         android:id="@+id/svAllDevices"
         android:layout_width="match_parent"
-        android:layout_height="491dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnLocation"
-        app:layout_constraintVertical_bias="0.5">
+        app:layout_constraintTop_toBottomOf="@id/btnLocation">
 
         <LinearLayout
             android:id="@+id/llAllDevices"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="8dp">
 
-            <!-- Device Item Layout (this will be repeated dynamically) -->
+            <!-- Device Item Layout (Repeating Structure) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:orientation="horizontal"
+                android:background="@drawable/card_background"
                 android:padding="16dp">
 
                 <ImageView
                     android:id="@+id/ivAllDeviceImage"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginEnd="16dp"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="12dp"
                     android:scaleType="centerCrop" />
 
                 <LinearLayout
@@ -61,50 +110,32 @@
                         android:id="@+id/tvAllDeviceName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="18sp"
+                        android:text="Device Name"
+                        android:textColor="@color/lightText"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvAllDeviceType"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="4dp"
+                        android:text="Device Type"
+                        android:textColor="@color/lightText"
+                        android:textSize="14sp" />
 
                     <TextView
                         android:id="@+id/tvAllDevicePrice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textColor="@android:color/holo_green_dark" />
+                        android:text="Price"
+                        android:textColor="@android:color/holo_green_dark"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
-
-    <Spinner
-        android:id="@+id/spnFilter"
-        android:layout_width="162dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="44dp"
-        app:layout_constraintBottom_toTopOf="@+id/svAllDevices"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
-
-    <ImageView
-        android:id="@+id/ivBackReservation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:rotation="270"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/round_navigation_white_48" />
-
-    <Spinner
-        android:id="@+id/locationSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

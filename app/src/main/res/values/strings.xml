@@ -2,11 +2,12 @@
     <string name="app_name">Revice</string>
     <string name="email">email</string>
     <string name="password">password</string>
-    <string name="btnlocation">Search radius</string>
+    <string name="btnlocation">Location</string>
     <string name="btnbook">+ Book</string>
     <string name="btnAdd">+ Add</string>
     <string name="txtDevices">My Devices</string>
     <string name="btnCreate">Create</string>
+    <string name="btnDelete">X</string>
     <string-array name="category">
         <item></item>
         <item>Gardening</item>

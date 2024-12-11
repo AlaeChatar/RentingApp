@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="red">#FF0000</color>
+    <color name="backgroundColor">#F5F5F5</color>
+    <color name="textPrimary">#333333</color>
+    <color name="lightGray">#DDDDDD</color>
+    <color name="primary">#BB86FC</color>
+    <color name="darkBackground">#121212</color>
+    <color name="lightText">#E0E0E0</color>
+    <color name="darkFieldBackground">#1E1E1E</color>
+    <color name="fieldBorder">#BB86FC</color>
+    <color name="darkButtonText">#121212</color>
+    <color name="secondaryText">#A0A0A0</color>
+    <color name="cardBackground">#1E1E1E</color>
+    <color name="darkButtonTextHome">#FFFFFF</color>
+
+</resources>

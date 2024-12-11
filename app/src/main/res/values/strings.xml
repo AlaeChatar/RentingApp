@@ -8,7 +8,7 @@
     <string name="btnCreate">Create</string>
     <string name="btnMap">Filter</string>
     <string-array name="category">
-        <item>Pick a Category</item>
+        <item>Select a Category</item>
         <item>Gardening</item>
         <item>Cooking</item>
         <item>Cleaning</item>

@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -112,16 +113,31 @@ class HomeScreen : AppCompatActivity() {
 
     private fun displayReservations(reservationsList: List<Device>) {
         val llAllReservations = homeScreenBinding.llAllReservations
-        llAllReservations.removeAllViews() // Clear existing views
+
+        // Clear all views including the template
+        llAllReservations.removeAllViews()
 
         if (reservationsList.isEmpty()) {
             // Show a message if no reservations are available
             val noReservationsMessage = TextView(this).apply {
-                text = "No reservations found"
+                text = "There are no booked devices."
                 textSize = 16f
                 setPadding(16, 16, 16, 16)
+                setTextColor(getColor(R.color.lightText))
+                gravity = android.view.Gravity.CENTER
             }
-            llAllReservations.addView(noReservationsMessage)
+            
+            // Create a container for the message to center it in the parent
+            val container = LinearLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                gravity = android.view.Gravity.CENTER
+                addView(noReservationsMessage)
+            }
+            
+            llAllReservations.addView(container)
             return
         }
 

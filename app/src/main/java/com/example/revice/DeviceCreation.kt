@@ -98,8 +98,13 @@ class DeviceCreation : AppCompatActivity() {
         val devicePrice = creationBinding.etPrice.text.toString().toDoubleOrNull() ?: 0.0
         val deviceType = creationBinding.spnCategory.selectedItem.toString()
 
-        if (deviceName.isBlank() || deviceType.isBlank()) {
-            Toast.makeText(baseContext, "Device name and type are required.", Toast.LENGTH_SHORT).show()
+        if (deviceName.isBlank()) {
+            Toast.makeText(baseContext, "Device name is required.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (deviceType == "Select a Category") {
+            Toast.makeText(baseContext, "Please select a device category.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -114,13 +119,16 @@ class DeviceCreation : AppCompatActivity() {
             return
         }
 
-        // Fetch the user's location from Firestore
+        // Check for user's location first
         val userDocRef = db.collection("users").document(user.uid)
         userDocRef.get()
             .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    location = document.getString("location") ?: "Unknown Location"
+                if (!document.exists() || document.getString("location").isNullOrEmpty()) {
+                    Toast.makeText(this, "Please set your location in profile first", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
                 }
+
+                val location = document.getString("location") ?: "Unknown Location"
 
                 // Create a Device object
                 val device = Device(
@@ -128,7 +136,7 @@ class DeviceCreation : AppCompatActivity() {
                     deviceName = deviceName,
                     devicePrice = devicePrice,
                     deviceType = deviceType,
-                    deviceImage = base64Image!!, // Add the encoded image
+                    deviceImage = base64Image!!,
                     deviceLocation = location
                 )
 
